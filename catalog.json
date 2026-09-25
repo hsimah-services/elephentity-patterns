@@ -2,16 +2,17 @@
   "format": 1,
   "patterns": {
     "HasTimestamps": {
-      "description": "Framework-managed creation and modification timestamps.",
+      "description": "Creation and modification timestamps with a bundled PHP pre-commit trigger.",
       "tags": ["timestamps", "created", "modified"],
       "status": "ready",
-      "contract": null,
+      "contract": "extendable",
       "dependencies": [],
-      "runtimeDependencies": [],
+      "runtimeDependencies": ["php >=8.3", "elephentity/runtime"],
       "schemaCompatibility": "Elephentity 0.11",
       "files": {
         "patterns/HasTimestamps/pattern.yml": "spec/patterns/HasTimestamps.yml",
-        "patterns/HasTimestamps/README.md": "docs/patterns/HasTimestamps.md"
+        "patterns/HasTimestamps/README.md": "docs/patterns/HasTimestamps.md",
+        "patterns/HasTimestamps/HasTimestampsTrigger.php": "src/Patterns/HasTimestamps/HasTimestampsTrigger.php"
       }
     },
     "HasSlug": {

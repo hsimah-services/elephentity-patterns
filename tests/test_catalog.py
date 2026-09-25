@@ -36,6 +36,20 @@ class CatalogTest(unittest.TestCase):
         self.assertEqual(catalog.digest((self.app / target).read_bytes()), lock["patterns"]["HasTimestamps"]["files"][target]["sha256"])
         self.assertFalse((self.app / "spec/patterns/HasSlug.yml").exists())
         self.assertTrue((self.app / "docs/patterns/LICENSE").is_file())
+        trigger = "src/Patterns/HasTimestamps/HasTimestampsTrigger.php"
+        source = ROOT / "patterns/HasTimestamps/HasTimestampsTrigger.php"
+        self.assertEqual(source.read_bytes(), (self.app / trigger).read_bytes())
+        self.assertEqual(catalog.digest(source.read_bytes()), lock["patterns"]["HasTimestamps"]["files"][trigger]["sha256"])
+
+    def test_custom_code_collision_does_not_copy_spec(self):
+        target = self.app / "src/Patterns/HasTimestamps/HasTimestampsTrigger.php"
+        target.parent.mkdir(parents=True)
+        target.write_text("application-owned trigger")
+        with self.assertRaisesRegex(ValueError, "already exists"):
+            catalog.copy_pattern(self.root, self.app, "HasTimestamps")
+        self.assertEqual("application-owned trigger", target.read_text())
+        self.assertFalse((self.app / "spec").exists())
+        self.assertFalse((self.app / catalog.LOCK).exists())
 
     def test_collision_preserves_local_code_without_partial_copy(self):
         target = self.app / "spec/patterns/HasTimestamps.yml"

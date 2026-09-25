@@ -13,8 +13,8 @@ python3 tools/catalog.py search timestamps
 python3 tools/catalog.py copy HasTimestamps --into /path/to/application
 ```
 
-The helper copies only the chosen pattern and its declared dependencies. It
-refuses existing destination files. It writes `.eleph-patterns.json` with source
+The helper copies only the chosen pattern, its bundled custom code, and its
+declared dependencies. It refuses existing destination files. It writes `.eleph-patterns.json` with source
 paths, revision information when available, and SHA-256 hashes. Nothing is
 executed from a pattern, and no dependencies are downloaded or installed.
 
@@ -23,15 +23,17 @@ validate, and generation checks. Adjust your application-owned pattern before
 generation if its choices do not match your domain.
 
 Manual copying is equally supported: copy `patterns/HasTimestamps/pattern.yml`
-to your spec root's `patterns/HasTimestamps.yml`. Keep its README and the MIT
-license with your copy. The helper assumes `spec/` is your spec root; use
+to your spec root's `patterns/HasTimestamps.yml`, and copy its PHP trigger using
+the destinations in `catalog.json`. Follow the pattern README to wire its handler.
+Keep its README and the MIT license with your copy. The helper assumes `spec/`
+is your spec root; use
 manual copying for a different layout for now.
 
 ## Catalog contents
 
 | Pattern | Status | Behavior |
 | --- | --- | --- |
-| [HasTimestamps](patterns/HasTimestamps/README.md) | Ready | Framework-managed creation and modification timestamps |
+| [HasTimestamps](patterns/HasTimestamps/README.md) | Ready | Creation and modification timestamps with bundled PHP trigger |
 | [HasSlug](patterns/HasSlug/README.md) | Ready | Required, immutable application-supplied slug |
 | HasCreator | Planned | Required creator relationship to a configurable entity; cannot be cleared |
 
@@ -61,8 +63,11 @@ python3 tools/catalog.py check
 python3 -m unittest discover -s tests -v
 # With a local Elephentity development checkout and its Composer dependencies:
 php tests/compile.php /path/to/elephentity/vendor/autoload.php
+php tests/timestamps.php /path/to/elephentity-dev
 ```
 
 The compilation test checks every ready pattern against the real compiler; the
 Python tests cover selection, provenance, dependency resolution, and collision
-handling. No Composer manifest is needed in this repository.
+handling. The timestamp integration test compiles and generates two consuming
+entities, then tests the bundled trigger through their generated dispatchers.
+No Composer manifest is needed in this repository.
