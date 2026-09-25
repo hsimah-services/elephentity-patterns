@@ -23,8 +23,8 @@ validate, and generation checks. Adjust your application-owned pattern before
 generation if its choices do not match your domain.
 
 Manual copying is equally supported: copy `patterns/HasTimestamps/pattern.yml`
-to your spec root's `patterns/HasTimestamps.yml`. Keep its README and the Apache
-2.0 license with your copy. The helper assumes `spec/` is your spec root; use
+to your spec root's `patterns/HasTimestamps.yml`. Keep its README and the MIT
+license with your copy. The helper assumes `spec/` is your spec root; use
 manual copying for a different layout for now.
 
 ## Catalog contents
