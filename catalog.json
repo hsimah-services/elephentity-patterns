@@ -1,0 +1,41 @@
+{
+  "format": 1,
+  "patterns": {
+    "HasTimestamps": {
+      "description": "Framework-managed creation and modification timestamps.",
+      "tags": ["timestamps", "created", "modified"],
+      "status": "ready",
+      "contract": null,
+      "dependencies": [],
+      "runtimeDependencies": [],
+      "schemaCompatibility": "Elephentity 0.11",
+      "files": {
+        "patterns/HasTimestamps/pattern.yml": "spec/patterns/HasTimestamps.yml",
+        "patterns/HasTimestamps/README.md": "docs/patterns/HasTimestamps.md"
+      }
+    },
+    "HasSlug": {
+      "description": "An application-supplied immutable slug; no format or uniqueness rule.",
+      "tags": ["slug", "url", "immutable"],
+      "status": "ready",
+      "contract": null,
+      "dependencies": [],
+      "runtimeDependencies": [],
+      "schemaCompatibility": "Elephentity 0.11",
+      "files": {
+        "patterns/HasSlug/pattern.yml": "spec/patterns/HasSlug.yml",
+        "patterns/HasSlug/README.md": "docs/patterns/HasSlug.md"
+      }
+    },
+    "HasCreator": {
+      "description": "Planned: a creator relationship that must be supplied and cannot be cleared.",
+      "tags": ["creator", "ownership", "relationship", "validation"],
+      "status": "planned",
+      "contract": "shared",
+      "dependencies": [],
+      "runtimeDependencies": [],
+      "schemaCompatibility": null,
+      "files": {}
+    }
+  }
+}
