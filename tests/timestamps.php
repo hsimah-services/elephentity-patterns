@@ -3,9 +3,6 @@
 declare(strict_types=1);
 
 use App\Patterns\HasTimestamps\HasTimestampsTrigger;
-use Eleph\Gen\Php\PhpTarget;
-use Eleph\Gen\Php\TargetRequest;
-use Eleph\Gen\Php\Wire\IrCodec as PhpIrCodec;
 use Eleph\Runtime\Identity\EntityId;
 use Eleph\Runtime\Identity\PendingId;
 use Eleph\Runtime\Mutation\Mutation;
@@ -13,26 +10,14 @@ use Eleph\Runtime\SideEffect\SideEffectPhase;
 use Eleph\Runtime\Type\NullProcessorRegistry;
 use Eleph\Runtime\UnitOfWork\SideEffectDispatcher;
 use Eleph\Runtime\UnitOfWork\VerificationPipeline;
-use Eleph\Schema\SchemaCompiler;
-use Eleph\Schema\SpecSource;
-use Eleph\Schema\Wire\IrCodec;
+
+require __DIR__ . '/support.php';
 
 $workspace = $argv[1] ?? throw new RuntimeException('Pass the Elephentity workspace directory.');
-require $workspace . '/elephentity/vendor/autoload.php';
-require $workspace . '/elephentity-codegen-php/vendor/autoload.php';
 require $workspace . '/elephentity-runtime/vendor/autoload.php';
 require __DIR__ . '/../patterns/HasTimestamps/HasTimestampsTrigger.php';
 
-function check(bool $condition, string $message): void
-{
-    if (!$condition) {
-        throw new RuntimeException($message);
-    }
-}
-
-$directory = sys_get_temp_dir() . '/eleph-timestamps-' . bin2hex(random_bytes(8));
-mkdir($directory . '/spec/entities', recursive: true);
-mkdir($directory . '/spec/patterns');
+$directory = temporaryProject('eleph-timestamps');
 
 try {
     file_put_contents($directory . '/spec/project.yml', "project: TimestampTest\nstorage:\n  driver: memory\n");
@@ -40,21 +25,25 @@ try {
     foreach (['Article', 'Comment'] as $name) {
         file_put_contents($directory . '/spec/entities/' . $name . '.yml', "entity: {$name}\nuse: [HasTimestamps]\nstorage:\n  table: " . strtolower($name) . "\n");
     }
-    $compiled = (new SchemaCompiler())->compile(new SpecSource($directory . '/spec'));
-    check($compiled->isSuccess(), 'Timestamp spec failed compilation: ' . json_encode($compiled->errors));
-    $schema = PhpIrCodec::decode(IrCodec::encode($compiled->schema()));
-    $generated = (new PhpTarget())->generate(TargetRequest::of($directory . '/generated', [
+    // eleph pipes the IR to eleph-codegen; a wrapper in front of it keeps a copy, so the test
+    // can read what the compiler made of the pattern without a second compiler to ask.
+    $codegen = $workspace . '/elephentity-codegen/bin/eleph-codegen';
+    $irFile = $directory . '/ir.json';
+    file_put_contents($directory . '/codegen', sprintf(
+        "#!/bin/sh\ncase \" \$* \" in\n  *\" generate \"*) tee %s | %s \"\$@\" ;;\n  *) exec %s \"\$@\" ;;\nesac\n",
+        escapeshellarg($irFile),
+        escapeshellarg($codegen),
+        escapeshellarg($codegen),
+    ));
+    chmod($directory . '/codegen', 0o755);
+    writeConfig($directory, $workspace, ['php' => [
+        'builder' => $workspace . '/elephentity-codegen-php/bin/eleph-gen-php',
+        'output' => 'generated',
         'namespace' => 'TimestampTest',
         'typeNamespace' => 'TimestampTest\\Type',
-    ]), $schema);
-    check($generated->isSuccess(), 'Timestamp generation failed: ' . json_encode($generated->errors));
-    foreach ($generated->files as $file) {
-        $path = $directory . '/generated/' . $file->relativePath;
-        if (!is_dir(dirname($path))) {
-            mkdir(dirname($path), recursive: true);
-        }
-        file_put_contents($path, "<?php\n\ndeclare(strict_types=1);\n\n" . $file->body);
-    }
+    ]], $directory . '/codegen');
+    runEleph($directory, ['generate']);
+    $schema = json_decode(file_get_contents($irFile), true, flags: JSON_THROW_ON_ERROR)['schema'];
     $autoload = static function (string $class) use ($directory): void {
         if (str_starts_with($class, 'TimestampTest\\')) {
             $path = $directory . '/generated/' . str_replace('\\', '/', substr($class, strlen('TimestampTest\\'))) . '.php';
@@ -85,8 +74,8 @@ try {
     ]);
 
     foreach (['Article', 'Comment'] as $name) {
-        foreach ($schema->entity($name)->fields as $field) {
-            check(null === $field->managed, 'Runtime stamping must not overwrite custom trigger values.');
+        foreach ($schema['entities'][$name]['fields'] as $field) {
+            check(null === $field['managed'], 'Runtime stamping must not overwrite custom trigger values.');
         }
         $create = new Mutation($name, new PendingId($name));
         $create->set('createdAt', new DateTimeImmutable('2000-01-01Z'));
@@ -139,9 +128,5 @@ try {
     if (isset($autoload)) {
         spl_autoload_unregister($autoload);
     }
-    $files = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($directory, FilesystemIterator::SKIP_DOTS), RecursiveIteratorIterator::CHILD_FIRST);
-    foreach ($files as $file) {
-        $file->isDir() ? rmdir($file->getPathname()) : unlink($file->getPathname());
-    }
-    rmdir($directory);
+    removeTree($directory);
 }
