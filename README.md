@@ -61,13 +61,14 @@ the required behavior. Do not copy the whole catalog into a production project.
 ```sh
 python3 tools/catalog.py check
 python3 -m unittest discover -s tests -v
-# With a local Elephentity development checkout and its Composer dependencies:
-php tests/compile.php /path/to/elephentity/vendor/autoload.php
+# With `eleph` on PATH (install.sh, or set ELEPH) and an Elephentity workspace whose
+# elephentity-codegen and elephentity-codegen-php are built, and elephentity-runtime installed:
+php tests/compile.php /path/to/elephentity-dev
 php tests/timestamps.php /path/to/elephentity-dev
 ```
 
-The compilation test checks every ready pattern against the real compiler; the
+The compilation test runs `eleph validate` over every ready pattern; the
 Python tests cover selection, provenance, dependency resolution, and collision
-handling. The timestamp integration test compiles and generates two consuming
+handling. The timestamp integration test runs `eleph generate` for two consuming
 entities, then tests the bundled trigger through their generated dispatchers.
 No Composer manifest is needed in this repository.
