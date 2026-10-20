@@ -1,3 +1,9 @@
+> **Archived: this repository moved into [`hsimah-services/elephentity`](https://github.com/hsimah-services/elephentity/tree/main/patterns).**
+> It is `patterns/` there, with the pattern catalogue. C# is now the primary target, and one repository lets a
+> change to the compiler, a builder and the .NET runtime land in one pull request, with one CI and one
+> set of issues. The history was not carried over; this repository keeps it, read-only. 
+> Open issues and pull requests go to `elephentity`.
+
 # Elephentity patterns
 
 A source catalog of reusable Elephentity patterns. Copy selected patterns into
